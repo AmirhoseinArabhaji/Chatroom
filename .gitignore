@@ -1,0 +1,4 @@
+other/*
+.idea/*
+venv/*
+*/__pycache__/*
