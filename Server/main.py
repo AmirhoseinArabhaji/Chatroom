@@ -4,7 +4,7 @@ from Parser import Parser
 from User import User
 
 # server will listen on this port
-PORT = 10010
+PORT = 10000
 # all connected clients will be stored in this list
 connected_users = []
 
@@ -32,21 +32,29 @@ def join_member(client_socket, addr, username):
     msg = f'<{user.username}> joined the chat room.'.encode('utf-8')
     # send message to other clients that are connected to server
     for client in connected_users:
-        if client.username != user.username:
+        # send member joined message to all user except the user that joined now
+        if client.username != username:
             client.client_socket.send(msg)
+            # send list of all users to update on client side
+            # list_members(client.client_socket)
+
+    # send message for newly joined user and list of other members
+    msg = f'Hi <{username}>, welcome to the chat room.'.encode('utf-8')
+    client_socket.send(msg)
+    # list_members(client_socket)
 
 
-def leave_member(client_socket):
+def leave_member(username):
     """
 
     """
-    username = get_username_of_client(client_socket)
     # create message that has to be send and encode it
     msg = f'<{username}> left the chat room.'.encode('utf-8')
     # send message to all users except the new client that connected
     for client in connected_users:
         if client.username != username:
             client.client_socket.send(msg)
+            # list_members(client.client_socket)
 
 
 def list_members(client_socket):
@@ -75,7 +83,7 @@ def private_message(client_socket, msg_len, message, usernames):
     """
     username = get_username_of_client(client_socket)
     # create message that has to be send
-    msg = f'Public message, length=<{msg_len}> from <{username}> to'
+    msg = f'Private message, length=<{msg_len}> from <{username}> to'
     msg += ','.join(['<' + username + '>' for username in usernames]) + '\r\n' + f'<{message}>'
 
     for client in connected_users:
@@ -97,7 +105,8 @@ def check_type(info_dict, client_socket, addr):
         join_member(client_socket, addr, info_dict.get('username'))
 
     elif msg_type == 'leave':
-        leave_member(client_socket)
+        username = get_username_of_client(client_socket)
+        leave_member(username)
 
     elif msg_type == 'list':
         list_members(client_socket)
@@ -120,7 +129,7 @@ def remove_client(client_socket):
         # find a user with specified client socket
         if user.client_socket == client_socket:
             # save username for sending message to other users
-            disconnected_user = user.username
+            disconnected_user = user.username[:]
             # pop user from list
             connected_users.remove(user)
 
@@ -136,6 +145,7 @@ def listen_for_client(client_socket, addr):
         try:
             # keep listening for a message from 'client_socket'
             msg = client_socket.recv(1024).decode('utf-8')
+            print(msg)
             # create a parser object and pass the message to parser
             msg_obj = Parser(msg)
             # call parse method to parse the message and a get a dictionary of message content

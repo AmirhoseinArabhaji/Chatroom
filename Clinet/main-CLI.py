@@ -4,7 +4,7 @@ from Menu import menu
 from Parser import Parser
 
 # client will send message on this port
-PORT = 10010
+PORT = 10004
 
 
 def join_chat(sckt):
@@ -25,6 +25,7 @@ def members_list(sckt):
 
 def check_type(info_dict):
     # get type of message and remove it from dictionary
+    print('diction: ', info_dict)
     msg_type = info_dict.pop('type')
 
     if msg_type == 'join':
@@ -36,7 +37,7 @@ def check_type(info_dict):
         print(f'Hi <{username}>, welcome to the chat room.')
 
     elif msg_type == 'list':
-        print('Here is the list of attendees:\r\n', end='')
+        print('Here is the list of attendees:')
         print(','.join(['<' + username + '>' for username in info_dict.get('usernames')]))
 
     elif msg_type == 'public':
@@ -65,6 +66,7 @@ def listen_for_message(s):
     while True:
         # receive message and decode it
         msg = s.recv(1024).decode('utf-8')
+        print('RAW_MESSAGE: ' + msg)  # TODO
         # create a parser object and pass the message to parser
         msg_obj = Parser(msg)
         # call parse method to parse the message and a get a dictionary of message content

@@ -32,13 +32,24 @@ class Parser:
         elif self.msg.startswith('Private message'):
             msg_head, msg_body = self.msg.split('\r\n')
             msg_body = msg_body.strip('<>')
+            print(msg_head)
             msg_length = msg_head[msg_head.find('<') + 1: msg_head.find('>')]
             msg_from_username = msg_head[msg_head.find('from <') + 6:msg_head.find('> to')]
+            print(msg_from_username)
             users = [i.strip('<>') for i in msg_head[msg_head.find('to ') + 3: -1].split(',')]
             res_type = 'private'
-            return {'type': res_type, 'username': msg_from_username, 'length': msg_length, 'message': msg_body}
+            # print(msg_head, msg_body, msg_length, msg_from_username)
+            return {'type': res_type,
+                    'username': msg_from_username,
+                    'length': msg_length,
+                    'message': msg_body,
+                    'users': users}
 
         elif self.msg.endswith('left the chat room.'):
             msg_username = self.msg[1: self.msg.find('>')]
             res_type = 'leave'
             return {'type': res_type, 'username': msg_username}
+
+        else:
+            return {'type': 'none'}
+
