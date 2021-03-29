@@ -1,14 +1,11 @@
-# Form implementation generated from reading ui file 'private_message.ui'
-#
-# Created by: PyQt5 UI code generator 5.15.2
-
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class Ui_ChatWindow(object):
     def __init__(self, sckt, users):
         super(Ui_ChatWindow, self).__init__()
+
+        # set attributes
         self.sckt = sckt
         self.users = users
         self.checkBoxesList = []
@@ -96,6 +93,7 @@ class Ui_ChatWindow(object):
         # my code
         self.sendButton.clicked.connect(self.sendButtonClicked)
 
+        # create a list of users with checkbox for choosing theme
         for user in self.users:
             checkBox = QtWidgets.QCheckBox(user, self.verticalLayoutWidget)
             self.verticalLayout.addWidget(checkBox)
@@ -103,10 +101,15 @@ class Ui_ChatWindow(object):
 
     def sendButtonClicked(self):
         usersToSend = []
+        # get checked users list
         for checkBox in self.checkBoxesList:
             if checkBox.isChecked():
                 usersToSend.append(checkBox.text())
+        # get message from textbox
         text = self.textMessage.toPlainText()
+        # clear text from text box
+        self.textMessage.clear()
+        # create private message and send to server
         text_length = len(text.encode('utf-8'))
         msg = f'Private message, length=<{text_length}> to '
         msg += ','.join('<' + username + '>' for username in usersToSend) + f':\r\n<{text}>'

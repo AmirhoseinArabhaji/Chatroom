@@ -4,7 +4,7 @@ from Parser import Parser
 from User import User
 
 # server will listen on this port
-PORT = 10000
+PORT = 10001
 # all connected clients will be stored in this list
 connected_users = []
 
@@ -39,17 +39,18 @@ def join_member(client_socket, addr, username):
             # list_members(client.client_socket)
 
     # send message for newly joined user and list of other members
-    msg = f'Hi <{username}>, welcome to the chat room.'.encode('utf-8')
-    client_socket.send(msg)
-    # list_members(client_socket)
+    msg = f'Hi <{username}>, welcome to the chat room.'
+    print(msg)
+    client_socket.send(msg.encode('utf-8'))
 
 
 def leave_member(username):
     """
-
+    send leave message to all users
     """
     # create message that has to be send and encode it
     msg = f'<{username}> left the chat room.'.encode('utf-8')
+    print(msg)
     # send message to all users except the new client that connected
     for client in connected_users:
         if client.username != username:
@@ -61,9 +62,11 @@ def list_members(client_socket):
     """
     send list of all members to client
     """
+    # create message that has to be send
     msg = 'Here is the list of attendees:\r\n'
     msg += ','.join('<' + user.username + '>' for user in connected_users)
 
+    print(msg)
     client_socket.send(msg.encode('utf-8'))
 
 
@@ -71,8 +74,11 @@ def public_message(client_socket, msg_len, message):
     """
     send public message to all clients
     """
+    # get username of the client that send the message
     username = get_username_of_client(client_socket)
+    # create message and send to all user
     msg = f'Public message from <{username}>, length=<{msg_len}>:\r\n<{message}>'
+    print(msg)
     for user in connected_users:
         user.client_socket.send(msg.encode('utf-8'))
 
@@ -83,9 +89,11 @@ def private_message(client_socket, msg_len, message, usernames):
     """
     username = get_username_of_client(client_socket)
     # create message that has to be send
-    msg = f'Private message, length=<{msg_len}> from <{username}> to'
+    msg = f'Private message, length=<{msg_len}> from <{username}> to '
     msg += ','.join(['<' + username + '>' for username in usernames]) + '\r\n' + f'<{message}>'
 
+    print(msg)
+    # send message to wanted users
     for client in connected_users:
         # check if user in in usernames list
         if client.username in usernames:
@@ -145,6 +153,7 @@ def listen_for_client(client_socket, addr):
         try:
             # keep listening for a message from 'client_socket'
             msg = client_socket.recv(1024).decode('utf-8')
+            # print all messages that come from clients
             print(msg)
             # create a parser object and pass the message to parser
             msg_obj = Parser(msg)

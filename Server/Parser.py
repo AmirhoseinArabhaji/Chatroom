@@ -1,4 +1,8 @@
 class Parser:
+    """
+    Parser class for parsing message received from clients
+    and return a standard response
+    """
 
     def __init__(self, msg):
         self.msg = msg

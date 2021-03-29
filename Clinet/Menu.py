@@ -1,5 +1,9 @@
 import os
 
+"""
+menu for CLI
+"""
+
 
 def menu_options():
     print('[1] join chat')

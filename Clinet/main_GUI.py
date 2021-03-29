@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file 'welcome.ui'
-#
-# Created by: PyQt5 UI code generator 5.15.2
-
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 from public_chat import Ui_MainWindow
 
@@ -41,7 +34,7 @@ class Ui_WelcomeWindow(object):
 
         # enter username label configuration
         self.usernameLabel = QtWidgets.QLabel(self.centralwidget)
-        self.usernameLabel.setGeometry(QtCore.QRect(260, 270, 81, 41))
+        self.usernameLabel.setGeometry(QtCore.QRect(250, 270, 95, 41))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.usernameLabel.setFont(font)
@@ -85,11 +78,14 @@ class Ui_WelcomeWindow(object):
         self.joinButton.clicked.connect(self.joinClicked)
 
     def joinClicked(self):
+        # get username from Line edit
         username = self.usernameText.text()
+        # create object of public chat window and pass the username and open window
         self.window = QtWidgets.QMainWindow()
         self.ui = Ui_MainWindow(username)
         self.ui.setupUi(self.window)
         self.window.show()
+        # hide welcome window
         WelcomeWindow.hide()
 
 

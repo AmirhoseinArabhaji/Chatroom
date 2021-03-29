@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file 'public_chat.ui'
-#
-# Created by: PyQt5 UI code generator 5.15.2
-
 import socket
 from Parser import Parser
 
@@ -11,13 +5,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QThread, QObject
 from private_message import Ui_ChatWindow
 
-PORT = 10000
+PORT = 10001
 
 
 class Ui_MainWindow(object):
     def __init__(self, username):
         super(Ui_MainWindow, self).__init__()
 
+        # set attributes
         self.username = username
         self.port = PORT
         self.connect_to_server()
@@ -41,6 +36,8 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.centralwidget.sizePolicy().hasHeightForWidth())
         self.centralwidget.setSizePolicy(sizePolicy)
         self.centralwidget.setObjectName("centralwidget")
+
+        # vertical line configuration
         self.line = QtWidgets.QFrame(self.centralwidget)
         self.line.setGeometry(QtCore.QRect(540, 0, 20, 561))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -115,6 +112,8 @@ class Ui_MainWindow(object):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+
+        # menu bar action configuration
         self.actionExit = QtWidgets.QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
         self.menuMenu.addAction(self.actionExit)
@@ -126,50 +125,72 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Chatroom"))
-        # self.chatHistory.setPlainText(_translate("MainWindow", "a sdf\n"))
         self.sendPublicButton.setText(_translate("MainWindow", "Send"))
-        self.attendeesLabel.setText(
-            _translate("MainWindow", "<html><head/><body><p align=\"center\">Attendees</p></body></html>"))
+        self.attendeesLabel.setText(_translate("MainWindow", "Attendees"))
         __sortingEnabled = self.attendeesList.isSortingEnabled()
         self.attendeesList.setSortingEnabled(False)
-
         self.attendeesList.setSortingEnabled(__sortingEnabled)
         self.sendPrivateButton.setText(_translate("MainWindow", "Send Private Message"))
         self.menuMenu.setTitle(_translate("MainWindow", "Menu"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
 
         # my code
-        self.join_chat()
 
         # connect buttons to functions
         self.sendPublicButton.clicked.connect(self.sendPublicClicked)
         self.sendPrivateButton.clicked.connect(self.sendPrivateClicked)
 
+        # connect exit action to exit chat
+        self.actionExit.triggered.connect(lambda: self.exitChat())
+
+        # join chat
+        self.join_chat()
+
+        # show message in status bar
+        self.statusbar.showMessage('Connected to server')
+
     def sendPublicClicked(self):
+        """
+        send message to server when send clickes
+        """
+        # get text from text box
         text = self.messageBox.text()
+        # clear text box
         self.messageBox.clear()
+        # create message and send message
         text_length = len(text.encode('utf-8'))
         msg = f'Public message, length=<{text_length}>:\r\n<{text}>'.encode('utf-8')
         self.sckt.send(msg)
 
     def sendPrivateClicked(self):
+        """
+        send private message in a separate window
+        """
+        # get users list to show in new window
         users = [str(self.attendeesList.item(i).text()) for i in range(self.attendeesList.count())]
+        # create an window instance of private message window
         self.window = QtWidgets.QMainWindow()
+        # pass socket and list of users to new window
         self.ui = Ui_ChatWindow(self.sckt, users)
         self.ui.setupUi(self.window)
+        # show window
         self.window.show()
-        # Ui_MainWindow.hide()
 
     def updateChatHistory(self, text):
-        self.chatHistory.appendPlainText(text)
-
-    def appendToChatHistory(self, text):
+        # update chat history with new message
         self.chatHistory.appendPlainText(text)
 
     def updateAttendeesList(self, users):
+        # update attendees list with users list
         self.attendeesList.clear()
         for user in users:
             self.attendeesList.addItem(user)
+
+    def exitChat(self):
+        # disconnect client from server and close socket
+        self.leave_chat()
+        self.sckt.close()
+        self.statusbar.showMessage('Disconnected')
 
     def connect_to_server(self):
         # creating a TCP socket
@@ -177,18 +198,20 @@ class Ui_MainWindow(object):
         # connect to specified server
         self.sckt.connect((socket.gethostname(), self.port))
 
+        # create a QThread(GUI thread) for listening to messages from server
         self.thread = QThread()
         self.worker = Worker(self.sckt)
         self.worker.moveToThread(self.thread)
+
         self.thread.started.connect(self.worker.run)
         self.worker.finished.connect(self.thread.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
         self.worker.progress.connect(self.listen_for_message)
+        # start server
         self.thread.start()
 
     def listen_for_message(self, msg):
-        print(msg)
         msg_obj = Parser(msg)
         # call parse method to parse the message and a get a dictionary of message content
         info = msg_obj.parse()
@@ -216,7 +239,7 @@ class Ui_MainWindow(object):
         elif msg_type == 'list':
             users = info_dict.get('usernames')
             self.updateAttendeesList(users)
-            # print('Here is the list of attendees:\n', end='')
+            # print('Here is the list of attendees:')
             # print(','.join(['<' + username + '>' for username in info_dict.get('usernames')]))
 
         elif msg_type == 'public':
@@ -236,14 +259,23 @@ class Ui_MainWindow(object):
             # print(msg)
 
     def join_chat(self):
+        """
+        send join message to server
+        """
         msg = f'Hello <{self.username}>'.encode('utf-8')
         self.sckt.send(msg)
 
     def leave_chat(self):
+        """
+        send leave message to server
+        """
         msg = 'Bye.'.encode('utf-8')
         self.sckt.send(msg)
 
     def members_list(self):
+        """
+        send list of members to list
+        """
         msg = 'Please send the list of attendees.'.encode('utf-8')
         self.sckt.send(msg)
 
@@ -264,6 +296,7 @@ class Worker(QObject):
         """
         called when thread starts
         """
+        # listen to messages in a True loop
         while True:
             msg = self.sckt.recv(1024).decode('utf-8')
             self.progress.emit(msg)
@@ -275,7 +308,7 @@ if __name__ == "__main__":
 
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow('test')
+    ui = Ui_MainWindow('test_username')
     ui.setupUi(MainWindow)
     MainWindow.show()
 
